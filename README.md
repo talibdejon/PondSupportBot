@@ -30,7 +30,6 @@ When automated solutions aren’t enough, the bot can **escalate conversations t
 The bot is built using:
 - [Python 3.9+](https://www.python.org/)  
 - [python-telegram-bot](https://python-telegram-bot.org/) for Telegram API integration  
-- [Flask / FastAPI (optional)](https://flask.palletsprojects.com/) for webhook handling  
 - **Pond Mobile Support Knowledge Base** (internal API or predefined scripts)  
 
 The bot operates in two modes:
