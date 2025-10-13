@@ -199,10 +199,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## Acknowledgments
-
-* [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) for the Telegram API wrapper
-* Pond Mobile Support Team for providing troubleshooting workflows and guidelines
 
 ```
 
