@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 import telebot
-from telebot import types
 from utils import load_prompt
 
 # --- Загрузка токена из .env ---
@@ -13,21 +12,20 @@ load_dotenv(dotenv_path)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TOKEN:
-    raise ValueError("Токен бота не найден! Проверьте файл .env")
+    raise ValueError("Token bot not found! check fail .env")
 
 bot = telebot.TeleBot(TOKEN)
 
 # --- /start command handler ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    keyboard = types.InlineKeyboardMarkup()
+    keyboard = telebot.types.InlineKeyboardMarkup()
     keyboard.row(
-        types.InlineKeyboardButton(text="Support", callback_data="support"),
-        types.InlineKeyboardButton(text="Sales", callback_data="sales")
+        telebot.types.InlineKeyboardButton(text="Support", callback_data="support"),
+        telebot.types.InlineKeyboardButton(text="Sales", callback_data="sales")
     )
 
-    welcome_text = load_prompt("welcome")  # загружаем текст из resources/welcome.txt
-
+    welcome_text = load_prompt("welcome")
     bot.send_message(
         message.chat.id,
         welcome_text,
