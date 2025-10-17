@@ -4,15 +4,15 @@ import telebot
 from utils import load_prompt
 
 # --- Загрузка токена из .env ---
-dotenv_path = '.env'
+dotenv_path = 'token.env'
 if not os.path.exists(dotenv_path):
-    raise FileNotFoundError(f".env файл не найден по пути {dotenv_path}")
+    raise FileNotFoundError(f"File token.env not found on {dotenv_path}")
 
 load_dotenv(dotenv_path)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TOKEN:
-    raise ValueError("Token bot not found! check fail .env")
+    raise ValueError("Token not found in the file! Check file token.env")
 
 bot = telebot.TeleBot(TOKEN)
 
