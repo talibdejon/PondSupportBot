@@ -5,16 +5,16 @@ from utils import load_prompt
 import auth
 import features
 
-# --- Загрузка токена из .env ---
-dotenv_path = '.env'
+# --- loading token.env ---
+dotenv_path = 'telegram_token.env'
 if not os.path.exists(dotenv_path):
-    raise FileNotFoundError(f"File .env not found on {dotenv_path}")
+    raise FileNotFoundError(f"File telegram_token.env not found on {dotenv_path}")
 
 load_dotenv(dotenv_path)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TOKEN:
-    raise ValueError("Token not found in the file! Check file .env")
+    raise ValueError("Token not found in the file! Check file telegram_token.env")
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -49,34 +49,34 @@ def handle_callback(call):
         bot.send_message(call.message.chat.id, sales_text)
 
     elif call.data == "check_usage":
-        bot.send_message(call.message.chat.id, "Please enter your 10-digit MDN (phone number):")
+        bot.send_message(call.message.chat.id, "Please enter your 10-digits POND mobile number:")
         bot.register_next_step_handler(call.message, process_mdn)
 
 
-# --- Проверка MDN и показ usage ---
+# --- checking MDN & preview usage ---
 def process_mdn(message):
     mdn = message.text.strip()
 
-    # number verification, 10 digits only
+    # The mdn should be 10 digits
     if not mdn.isdigit() or len(mdn) != 10:
         bot.send_message(
             message.chat.id,
             "⚠️ Invalid input. Please enter a valid 10-digit phone number (digits only, no + or text)."
         )
-        # Повторный запрос
         bot.register_next_step_handler(message, process_mdn)
         return
 
-    # Проверка авторизации через auth.py
+    # checking authorisation via auth.py
     if auth.is_customer(mdn):
-        # Получаем usage из features.py
+        # getting usage из features.py
         user_usage = features.check_usage(mdn)
 
-        usage_text = (
-            "📊 *Usage Information*\n\n"
-            "Here you can check your current balance, data usage, and plan limits.\n"
-            "For detailed reports, please log in to your POND Mobile account."
-        )
+        # text usage from file usage.txt
+        try:
+            with open("usage.txt", "r", encoding="utf-8") as f:
+                usage_text = f.read()
+        except FileNotFoundError:
+            usage_text = "📊 Usage information is currently unavailable."
 
         bot.send_message(
             message.chat.id,
@@ -90,7 +90,7 @@ def process_mdn(message):
         )
 
 
-# --- Запуск бота ---
+# --- start bot ---
 if __name__ == "__main__":
     print("Pond Mobile bot is running...")
     bot.polling(none_stop=True, interval=0, timeout=20)
