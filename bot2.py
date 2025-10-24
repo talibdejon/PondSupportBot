@@ -6,15 +6,15 @@ import auth
 import features
 
 # --- loading token.env ---
-dotenv_path = 'telegram_token.env'
+dotenv_path = 'telega.env'
 if not os.path.exists(dotenv_path):
-    raise FileNotFoundError(f"File telegram_token.env not found on {dotenv_path}")
+    raise FileNotFoundError(f"File telega.env not found on {dotenv_path}")
 
 load_dotenv(dotenv_path)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not TOKEN:
-    raise ValueError("Token not found in the file! Check file telegram_token.env")
+    raise ValueError("Token not found in the file! Check file telega.env")
 
 bot = telebot.TeleBot(TOKEN)
 
