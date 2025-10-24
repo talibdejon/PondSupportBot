@@ -49,7 +49,7 @@ def handle_callback(call):
         bot.send_message(call.message.chat.id, sales_text)
 
     elif call.data == "check_usage":
-        bot.send_message(call.message.chat.id, "Please enter your MDN (phone number) to verify your account:")
+        bot.send_message(call.message.chat.id, "Please enter your 10-digit MDN (phone number):")
         bot.register_next_step_handler(call.message, process_mdn)
 
 
@@ -57,6 +57,17 @@ def handle_callback(call):
 def process_mdn(message):
     mdn = message.text.strip()
 
+    # number verification, 10 digits only
+    if not mdn.isdigit() or len(mdn) != 10:
+        bot.send_message(
+            message.chat.id,
+            "⚠️ Invalid input. Please enter a valid 10-digit phone number (digits only, no + or text)."
+        )
+        # Повторный запрос
+        bot.register_next_step_handler(message, process_mdn)
+        return
+
+    # Проверка авторизации через auth.py
     if auth.is_customer(mdn):
         # Получаем usage из features.py
         user_usage = features.check_usage(mdn)
@@ -64,7 +75,7 @@ def process_mdn(message):
         usage_text = (
             "📊 *Usage Information*\n\n"
             "Here you can check your current balance, data usage, and plan limits.\n"
-            "For detailed reports, please log in to your POND Mobile account or contact support at @pondsupport."
+            "For detailed reports, please log in to your POND Mobile account."
         )
 
         bot.send_message(
