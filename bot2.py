@@ -23,10 +23,19 @@ bot = telebot.TeleBot(TOKEN)
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     keyboard = telebot.types.InlineKeyboardMarkup()
-    keyboard.row(
-        telebot.types.InlineKeyboardButton(text="Support", callback_data="support"),
-        telebot.types.InlineKeyboardButton(text="Sales", callback_data="sales"),
+
+    # button vertically
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(text="Support", callback_data="support")
+    )
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(text="Sales", callback_data="sales")
+    )
+    keyboard.add(
         telebot.types.InlineKeyboardButton(text="Check usage", callback_data="check_usage")
+    )
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(text="Coverage", url='https://www.pondmobile.com/coverage-map-pm/')
     )
 
     welcome_text = load_prompt("welcome")
@@ -86,7 +95,7 @@ def process_mdn(message):
     else:
         bot.send_message(
             message.chat.id,
-            "❌ Access denied. Your number is not registered as a POND Mobile customer."
+            "Your number is not registered as a POND mobile customer."
         )
 
 
