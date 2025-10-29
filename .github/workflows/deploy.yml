@@ -1,27 +1,35 @@
-name: Test Deploy Connection
+name: Deploy PondSupportBot
 
 on:
   pull_request:
-    types: [closed]
+    types: closed
     branches:
       - main
 
 jobs:
-  test-ssh:
+  deploy:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Test SSH Connection
+      - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
+        continue-on-error: true  # чтобы можно было обработать ошибку
         with:
           host: ${{ secrets.PONDSUPPORTBOT_HOST }}
           username: ${{ secrets.PONDSUPPORTBOT_USER }}
           key: ${{ secrets.PONDSUPPORTBOT_SSH_KEY }}
           script: |
-            whoami
-            uptime
+            set -e
+            echo "Starting deploy at $(date)"
+            /home/pondsupportbot/deploy.sh
+            echo "✅ Deploy completed successfully at $(date)"
 
+      - name: Check deploy result
+        if: failure()  # срабатывает, если предыдущий шаг упал
+        run: |
+          echo "❌ Deploy failed! Check SSH credentials, server availability, or deploy.sh logs."
+          exit 1
