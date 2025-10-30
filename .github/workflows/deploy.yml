@@ -24,7 +24,8 @@ jobs:
           script: |
             set -e
             echo "Starting deploy at $(date)"
-            TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" sudo /home/pondsupportbot/deploy.sh
+            TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" 
+            bash /home/pondsupportbot/deploy.sh
             echo "✅ Deploy completed successfully at $(date)"
 
       - name: Verify deployment
