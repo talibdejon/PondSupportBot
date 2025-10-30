@@ -10,6 +10,8 @@ jobs:
   deploy:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -35,10 +37,10 @@ jobs:
           key: ${{ secrets.PONDSUPPORTBOT_SSH_KEY }}
           script: |
             echo "Checking if bot is running..."
-            if pgrep -f bot2.py > /dev/null; then
+            if systemctl is-active --quiet pondsupportbot.service; then
               echo "✅ Bot is running"
             else
               echo "❌ Bot is NOT running"
+              journalctl -u pondsupportbot.service -n 50 --no-pager
               exit 1
             fi
-
