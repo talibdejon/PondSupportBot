@@ -24,8 +24,7 @@ jobs:
           script: |
             set -e
             echo "Starting deploy at $(date)"
-            export TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
-            /home/pondsupportbot/deploy.sh
+            TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" sudo /home/pondsupportbot/deploy.sh
             echo "✅ Deploy completed successfully at $(date)"
 
       - name: Verify deployment
@@ -35,10 +34,10 @@ jobs:
           username: ${{ secrets.PONDSUPPORTBOT_USER }}
           key: ${{ secrets.PONDSUPPORTBOT_SSH_KEY }}
           script: |
-            echo "Checking if bot service is running..."
-            if systemctl is-active --quiet pondsupportbot.service; then
-              echo "✅ Bot service is running"
+            echo "Checking if bot process is running..."
+            if pgrep -f bot2.py > /dev/null; then
+              echo "✅ Bot is running"
             else
-              echo "❌ Bot service is NOT running"
+              echo "❌ Bot is NOT running"
               exit 1
             fi
