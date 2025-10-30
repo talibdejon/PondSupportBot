@@ -2,7 +2,7 @@ name: Deploy PondSupportBot
 
 on:
   pull_request:
-    types: closed
+    types: [closed]
     branches:
       - main
 
@@ -15,20 +15,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Create token.env on server
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.PONDSUPPORTBOT_HOST }}
-          username: ${{ secrets.PONDSUPPORTBOT_USER }}
-          key: ${{ secrets.PONDSUPPORTBOT_SSH_KEY }}
-          script: |
-            echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" > /home/pondsupportbot/PondSupportBot/token.env
-            chmod 600 /home/pondsupportbot/PondSupportBot/token.env
-            echo "✅ token.env file created or updated"
-
       - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
-        continue-on-error: true
         with:
           host: ${{ secrets.PONDSUPPORTBOT_HOST }}
           username: ${{ secrets.PONDSUPPORTBOT_USER }}
@@ -39,8 +27,18 @@ jobs:
             /home/pondsupportbot/deploy.sh
             echo "✅ Deploy completed successfully at $(date)"
 
-      - name: Check deploy result
-        if: failure()
-        run: |
-          echo "❌ Deploy failed! Check SSH credentials, server availability, or deploy.sh logs."
-          exit 1
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.PONDSUPPORTBOT_HOST }}
+          username: ${{ secrets.PONDSUPPORTBOT_USER }}
+          key: ${{ secrets.PONDSUPPORTBOT_SSH_KEY }}
+          script: |
+            echo "Checking if bot is running..."
+            if pgrep -f bot2.py > /dev/null; then
+              echo "✅ Bot is running"
+            else
+              echo "❌ Bot is NOT running"
+              exit 1
+            fi
+
