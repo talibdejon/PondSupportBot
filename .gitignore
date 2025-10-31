@@ -209,3 +209,4 @@ Bot/token.env
 secrets/pondsupportbot2/telegram-token.env
 secrets/
 .env
+bequick-token.env
