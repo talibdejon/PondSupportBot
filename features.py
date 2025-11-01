@@ -1,14 +1,15 @@
-# features.py
 import os
 import requests
 from dotenv import load_dotenv
 from pathlib import Path
+from config import API_URL, API_TOKEN
 
 print("[DEBUG] Loaded features.py from:", __file__)
 
 # === Load BeQuick token ===
 dotenv_path = 'secrets/pondsupportbot2/bequick.env'
 load_dotenv(dotenv_path)
+API_URL = "https://pondmobile-atom-api.bequickapps.com"
 
 API_TOKEN = os.getenv("BEQUICK_TOKEN")
 if not API_TOKEN:
@@ -27,7 +28,7 @@ def kb_to_readable(kb_value: float) -> str:
 # === Fetch data usage ===
 def check_usage(line_id: int | str):
 
-    url = f"https://pondmobile-atom-api.bequickapps.com/lines/{line_id}/query_service_details"
+    url = f"{API_URL}/lines/{line_id}/query_service_details"
     headers = {"X-AUTH-TOKEN": API_TOKEN, "Content-Type": "application/json"}
 
     print(f"[BeQuick Usage] Checking usage for line_id={line_id} at: {url}")
