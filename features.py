@@ -17,7 +17,7 @@ if not API_TOKEN:
 
 # === Convert KB → MB/GB string ===
 def kb_to_readable(kb_value: float) -> str:
-    """Converts kilobytes to MB or GB."""
+
     mb = kb_value / 1024
     if mb >= 1024:
         gb = mb / 1024
@@ -26,10 +26,7 @@ def kb_to_readable(kb_value: float) -> str:
 
 # === Fetch data usage ===
 def check_usage(line_id: int | str):
-    """
-    Uses /lines/{line_id}/query_service_details endpoint.
-    Reads usage_summary.data.used_by_this_line (in KB).
-    """
+
     url = f"https://pondmobile-atom-api.bequickapps.com/lines/{line_id}/query_service_details"
     headers = {"X-AUTH-TOKEN": API_TOKEN, "Content-Type": "application/json"}
 
