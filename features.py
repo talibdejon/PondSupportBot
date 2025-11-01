@@ -68,3 +68,23 @@ def check_usage(line_id: int | str):
     except requests.exceptions.RequestException as e:
         print(f"[BeQuick Usage] Connection error: {e}")
         return "📊 Error fetching usage data"
+
+
+
+import os
+import requests
+
+dotenv_path = 'secrets/pondsupportbot2/bequick-token.env'
+load_dotenv(dotenv_path)
+
+API_TOKEN = os.getenv("BEQUICK_TOKEN")
+
+url = "https://pondmobile-atom-api.bequickapps.com/carriers"
+headers = {
+    "X-AUTH-TOKEN": API_TOKEN,
+    "Content-Type": "application/json"
+}
+
+response = requests.get(url, headers=headers)
+print(response.status_code)
+print(response.text)
