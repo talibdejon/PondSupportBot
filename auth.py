@@ -5,26 +5,18 @@ import requests
 from dotenv import load_dotenv
 from pathlib import Path
 
-# === Load BeQuick API token ===
-BASE_DIR = Path(__file__).resolve().parent
-dotenv_path = BASE_DIR / "secrets" / "pondsupportbot2" / "bequick-token.env"
+from features import API_TOKEN
+from utils import load_token
 
-if not os.path.exists(dotenv_path):
-    raise FileNotFoundError(f"[ERROR] File bequick-token.env not found at {dotenv_path}")
-
-load_dotenv(dotenv_path)
-
-API_TOKEN = os.getenv("bequick_token")
-if not API_TOKEN:
-    raise ValueError("[ERROR] bequick_token not loaded from bequick-token.env")
+API_TOKEN = load_token('BEQUICK')
 
 
 # === Normalize phone number ===
 def normalize_mdn(phone_number: str) -> str:
     """
-    Приводит номер телефона к формату, понятному BeQuick API:
-    - удаляет все символы, кроме цифр;
-    - убирает код страны 1 (для номеров США).
+    Converts the phone number into a format acceptable for BeQuick API:
+    - removes all non-digit characters;
+    - removes the country code '1' (for US numbers).
     """
     digits = re.sub(r"\D", "", phone_number)
     if len(digits) == 11 and digits.startswith("1"):
@@ -35,9 +27,9 @@ def normalize_mdn(phone_number: str) -> str:
 # === Verify customer and get line_id ===
 def get_line_id(mdn: str):
     """
-    Проверяет, существует ли MDN (номер телефона) в BeQuick
-    и возвращает line_id, если найден.
-    Возвращает None, если не найден.
+    Checks if the given MDN (phone number) exists in BeQuick
+    and returns the line_id if found.
+    Returns None if not found.
     """
     clean_mdn = normalize_mdn(mdn)
     url = f"https://pondmobile-atom-api.bequickapps.com/lines?by_quick_find[]={clean_mdn}"
@@ -68,6 +60,6 @@ def get_line_id(mdn: str):
 # === Check if user is a Pond Mobile client ===
 def is_client(mdn: str) -> bool:
     """
-    Возвращает True, если номер найден в системе BeQuick (то есть клиент Pond Mobile).
+    Returns True if the phone number is found in the BeQuick system (i.e., a Pond Mobile client).
     """
     return get_line_id(mdn) is not None

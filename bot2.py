@@ -1,19 +1,11 @@
 # bot2.py
 import os
-from dotenv import load_dotenv
 import telebot
 import auth
 import features
-
-# === Load Telegram bot token ===
-dotenv_path = 'secrets/pondsupportbot2/telegram-token.env'
-load_dotenv(dotenv_path)
-
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-if not TOKEN:
-    raise ValueError("Token not found in telegram-token.env")
-
-bot = telebot.TeleBot(TOKEN)
+from utils import load_token
+telegram_token=load_token("TELEGRAM")
+bot = telebot.TeleBot(telegram_token)
 print("Pond Mobile bot is running...")
 
 
@@ -104,7 +96,7 @@ def process_contact(message):
         return
 
     # Step 2: get usage info
-    bot.send_message(message.chat.id, f"✅ Found Line ID: {line_id}\nChecking data usage...")
+    bot.send_message(message.chat.id, "Please wait, I'm checking your data usage...")
     user_usage = features.check_usage(line_id)
     bot.send_message(message.chat.id, f"{user_usage}", reply_markup=back_menu_keyboard(prev_section="main_menu"))
 

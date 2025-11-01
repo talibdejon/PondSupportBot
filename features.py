@@ -7,15 +7,13 @@ from pathlib import Path
 print("[DEBUG] Loaded features.py from:", __file__)
 
 # === Load BeQuick token ===
-BASE_DIR = Path(__file__).resolve().parent
-dotenv_path = BASE_DIR / "secrets" / "pondsupportbot2" / "bequick-token.env"
+dotenv_path = 'secrets/pondsupportbot2/bequick.env'
 load_dotenv(dotenv_path)
 
-API_TOKEN = os.getenv("bequick_token")
+API_TOKEN = os.getenv("BEQUICK_TOKEN")
 if not API_TOKEN:
-    raise ValueError("[ERROR] bequick_token not loaded from bequick-token.env")
-else:
-    print(f"[DEBUG] Loaded bequick_token: {API_TOKEN[:10]}...")
+    raise ValueError("Token not found in bequick.env")
+
 
 # === Convert KB → MB/GB string ===
 def kb_to_readable(kb_value: float) -> str:
@@ -47,7 +45,7 @@ def check_usage(line_id: int | str):
 
         data = response.json() or {}
         usage_summary = data.get("usage_summary", {})
-        data_usage = usage_summary.get("data", {})
+        data_usage = usage_summary.get("international_data", {})
 
         # Extract values (in kilobytes)
         total_kb = float(data_usage.get("total", 0))
@@ -63,7 +61,7 @@ def check_usage(line_id: int | str):
 
         print(f"[DEBUG] Converted: used={used_str}, total={total_str}, remaining={remaining_str}")
 
-        return f"📊 Used: {used_str} / Total: {total_str} / Remaining: {remaining_str}"
+        return f"📊 Used: {used_str}"
 
     except requests.exceptions.RequestException as e:
         print(f"[BeQuick Usage] Connection error: {e}")
@@ -74,7 +72,7 @@ def check_usage(line_id: int | str):
 import os
 import requests
 
-dotenv_path = 'secrets/pondsupportbot2/bequick-token.env'
+dotenv_path = 'secrets/pondsupportbot2/bequick.env'
 load_dotenv(dotenv_path)
 
 API_TOKEN = os.getenv("BEQUICK_TOKEN")
