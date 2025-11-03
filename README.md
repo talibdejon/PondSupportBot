@@ -196,13 +196,3 @@ For questions, issues, or suggestions:
 
 This project is licensed under the [MIT License](LICENSE).
 © 2025 Pond Mobile. All rights reserved.
-
----
-
-
-```
-
----
-
-Would you like me to adapt this README for **Docker deployment instructions** as well, in case you plan to containerize the bot?
-```

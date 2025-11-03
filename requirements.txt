@@ -1,0 +1,6 @@
+# requirements.txt
+requests
+PyYAML
+python-dotenv
+schedule
+pyTelegramBotAPI
