@@ -3,21 +3,11 @@ import os
 import telebot
 import auth
 import features
-from utils import load_token
-
-
+import utils
 
 telegram_token=load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
 print("Pond Mobile bot is running...")
-
-
-# === Load text prompt ===
-def load_prompt(name):
-    """Load text file from /resources directory"""
-    with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
-        return file.read()
-
 
 # === Main menu keyboard ===
 def main_menu_keyboard():
@@ -28,7 +18,6 @@ def main_menu_keyboard():
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="https://pondmobile.com/coverage"))
     return keyboard
 
-
 # === Back / Main menu keyboard ===
 def back_menu_keyboard(prev_section=None):
     keyboard = telebot.types.InlineKeyboardMarkup()
@@ -36,7 +25,6 @@ def back_menu_keyboard(prev_section=None):
         keyboard.add(telebot.types.InlineKeyboardButton(text="⬅️ Back", callback_data=prev_section))
     keyboard.add(telebot.types.InlineKeyboardButton(text="🏠 Main Menu", callback_data="main_menu"))
     return keyboard
-
 
 # === /start command ===
 @bot.message_handler(commands=['start'])
@@ -46,7 +34,6 @@ def send_welcome(message):
         "📱 Welcome to POND Mobile Bot!\nChoose an option below:",
         reply_markup=main_menu_keyboard()
     )
-
 
 # === Handle button presses ===
 @bot.callback_query_handler(func=lambda call: True)
@@ -66,14 +53,14 @@ def handle_callback(call):
 
     elif call.data == "support":
         try:
-            content = load_prompt("support")
+            content = utils.load_prompt("support")
             bot.send_message(call.message.chat.id, content, reply_markup=back_menu_keyboard())
         except FileNotFoundError:
             bot.send_message(call.message.chat.id, "⚠️ File resources/support.txt not found.", reply_markup=back_menu_keyboard())
 
     elif call.data == "sales":
         try:
-            content = load_prompt("sales")
+            content = utils.load_prompt("sales")
             bot.send_message(call.message.chat.id, content, reply_markup=back_menu_keyboard())
         except FileNotFoundError:
             bot.send_message(call.message.chat.id, "⚠️ File resources/sales.txt not found.", reply_markup=back_menu_keyboard())
@@ -84,7 +71,6 @@ def handle_callback(call):
             "🧑‍💻 Support menu:",
             reply_markup=back_menu_keyboard(prev_section="main_menu")
         )
-
 
 # === Handle shared phone contact ===
 @bot.message_handler(content_types=['contact'])
