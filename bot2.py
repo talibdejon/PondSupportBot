@@ -5,7 +5,7 @@ import auth
 import features
 import utils
 
-telegram_token=load_token("TELEGRAM")
+telegram_token=utils.load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
 print("Pond Mobile bot is running...")
 
