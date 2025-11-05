@@ -201,13 +201,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
-Bot/token.env
-.env
-secrets/pondsupportbot2/telegram.env
+
 secrets/
-.env
-bequick-token.env
+*.env
+
+
+
