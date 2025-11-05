@@ -15,7 +15,7 @@ def main_menu_keyboard():
     keyboard.add(telebot.types.InlineKeyboardButton(text="Support", callback_data="support"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Sales", callback_data="sales"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Usage", callback_data="check_usage"))
-    keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="https://pondmobile.com/coverage"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="www.pondmobile.com/coverage-map-pm"))
     return keyboard
 
 # === Back / Main menu keyboard ===
