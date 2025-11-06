@@ -1,7 +1,8 @@
 import os
 import subprocess
 import json
-from pathlib import Path
+import pathlib
+import dotenv
 
 def load_prompt(name):
     with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
@@ -9,7 +10,7 @@ def load_prompt(name):
 
 def load_token(name):
     dotenv_path = 'secrets/pondsupportbot2/'+name+'.env'
-    load_dotenv(dotenv_path)
+    dotenv.load_dotenv(dotenv_path)
     token = os.getenv(f"{name.upper()}_TOKEN")
     if not token:
         raise ValueError(f"[ERROR] {name} token not found in {dotenv_path}")
@@ -26,7 +27,7 @@ def refresh_line(mdn: str) -> str:
         raise ValueError(name+' token not found')
     return TOKEN
 
-STAT_FILE = Path("stat/stat.json")
+STAT_FILE = pathlib.Path("stat/stat.json")
 
 def load_stat():
     if not STAT_FILE.exists():
