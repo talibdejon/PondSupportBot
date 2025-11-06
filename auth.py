@@ -1,17 +1,15 @@
 # auth.py
-import os
 import re
 import requests
-from dotenv import load_dotenv
-from pathlib import Path
 from utils import load_token
 
 API_TOKEN = load_token('BEQUICK')
 API_URL = "https://pondmobile-atom-api.bequickapps.com"
 
+
 # === Normalize phone number ===
 def normalize_mdn(phone_number: str) -> str:
-
+    """Remove non-digits and strip country code 1 for US numbers."""
     digits = re.sub(r"\D", "", phone_number)
     if len(digits) == 11 and digits.startswith("1"):
         digits = digits[1:]
@@ -20,7 +18,7 @@ def normalize_mdn(phone_number: str) -> str:
 
 # === Verify customer and get line_id ===
 def get_line_id(mdn: str):
-
+    """Check BeQuick if MDN exists and return line_id."""
     clean_mdn = normalize_mdn(mdn)
     url = f"{API_URL}/lines?by_quick_find[]={clean_mdn}"
     headers = {
@@ -30,7 +28,6 @@ def get_line_id(mdn: str):
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
-
         if resp.status_code != 200:
             print(f"[BeQuick] Error {resp.status_code}: {resp.text}")
             return None
@@ -49,5 +46,4 @@ def get_line_id(mdn: str):
 
 # === Check if user is a Pond Mobile client ===
 def is_client(mdn: str) -> bool:
-
     return get_line_id(mdn) is not None

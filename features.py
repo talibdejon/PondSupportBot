@@ -1,16 +1,16 @@
 import os
 import requests
 from dotenv import load_dotenv
-from pathlib import Path
-from config import API_URL, API_TOKEN
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from utils import load_prompt, refresh_line
 
 print("[DEBUG] Loaded features.py from:", __file__)
 
 # === Load BeQuick token ===
-dotenv_path = 'secrets/pondsupportbot2/bequick.env'
+dotenv_path = "secrets/pondsupportbot2/bequick.env"
 load_dotenv(dotenv_path)
-API_URL = "https://pondmobile-atom-api.bequickapps.com"
 
+API_URL = "https://pondmobile-atom-api.bequickapps.com"
 API_TOKEN = os.getenv("BEQUICK_TOKEN")
 if not API_TOKEN:
     raise ValueError("Token not found in bequick.env")
@@ -18,16 +18,12 @@ if not API_TOKEN:
 
 # === Convert KB → MB/GB string ===
 def kb_to_readable(kb_value: float) -> str:
-
     mb = kb_value / 1024
-    if mb >= 1024:
-        gb = mb / 1024
-        return f"{gb:.3f} GB"
-    return f"{mb:.2f} MB"
+    return f"{mb / 1024:.3f} GB" if mb >= 1024 else f"{mb:.2f} MB"
+
 
 # === Fetch data usage ===
 def check_usage(line_id: int | str):
-
     url = f"{API_URL}/lines/{line_id}/query_service_details"
     headers = {"X-AUTH-TOKEN": API_TOKEN, "Content-Type": "application/json"}
 
@@ -36,51 +32,54 @@ def check_usage(line_id: int | str):
     try:
         response = requests.get(url, headers=headers, timeout=10)
         print(f"[BeQuick Usage] Status: {response.status_code}")
-        print(f"[BeQuick Usage] Response sample: {(response.text or '')[:400]}")
 
         if response.status_code != 200:
-            return f"📊 Unable to fetch usage (status {response.status_code})"
+            template = load_prompt("usage_status")
+            return template.format(status=response.status_code)
 
         data = response.json() or {}
         usage_summary = data.get("usage_summary", {})
         data_usage = usage_summary.get("international_data", {})
 
-        # Extract values (in kilobytes)
         total_kb = float(data_usage.get("total", 0))
         remaining_kb = float(data_usage.get("remaining", 0))
         used_kb = float(data_usage.get("used_by_this_line", data_usage.get("used", 0)))
 
-        print(f"[DEBUG] Raw KB: used={used_kb}, total={total_kb}, remaining={remaining_kb}")
-
-        # Convert to readable units
         used_str = kb_to_readable(used_kb)
         total_str = kb_to_readable(total_kb)
         remaining_str = kb_to_readable(remaining_kb)
 
-        print(f"[DEBUG] Converted: used={used_str}, total={total_str}, remaining={remaining_str}")
-
-        return f"📊 Used: {used_str}"
+        template = load_prompt("usage")
+        return template.format(used=used_str, total=total_str, remaining=remaining_str)
 
     except requests.exceptions.RequestException as e:
         print(f"[BeQuick Usage] Connection error: {e}")
-        return "📊 Error fetching usage data"
+        return load_prompt("usage_error")
 
 
+# === Handle refresh request ===
+def handle_refresh_request(phone_number: str):
+    """
+    Creates message + inline button for contacting @pondsupport
+    and inserts MDN into refresh.txt template.
+    """
+    from auth import normalize_mdn, get_line_id
 
-import os
-import requests
+    mdn = normalize_mdn(phone_number)
+    line_id = get_line_id(mdn)
 
-dotenv_path = 'secrets/pondsupportbot2/bequick.env'
-load_dotenv(dotenv_path)
+    if not line_id:
+        return "❌ Your number is not registered as a POND mobile customer."
 
-API_TOKEN = os.getenv("BEQUICK_TOKEN")
+    # support chat link
+    url = refresh_line(mdn)
 
-url = "https://pondmobile-atom-api.bequickapps.com/carriers"
-headers = {
-    "X-AUTH-TOKEN": API_TOKEN,
-    "Content-Type": "application/json"
-}
+    # load template and insert MDN + link
+    template = load_prompt("refresh")
+    message = template.format(mdn=mdn)
 
-response = requests.get(url, headers=headers)
-print(response.status_code)
-print(response.text)
+    # create inline button for Telegram
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="💬 Open Support Chat", url=url))
+
+    return message, keyboard

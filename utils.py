@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import os
 import subprocess
 import json
@@ -11,7 +10,17 @@ def load_prompt(name):
 def load_token(name):
     dotenv_path = 'secrets/pondsupportbot2/'+name+'.env'
     load_dotenv(dotenv_path)
+    token = os.getenv(f"{name.upper()}_TOKEN")
+    if not token:
+        raise ValueError(f"[ERROR] {name} token not found in {dotenv_path}")
+    return token
 
+def refresh_line(mdn: str) -> str:
+
+    base_url = "https://t.me/pondsupport"
+    message = f"Dear customer support, this is my number {mdn}, please refresh my line"
+    encoded = urllib.parse.quote(message)
+    return f"{base_url}?text={encoded}"
     TOKEN = os.getenv(name.upper()+'_TOKEN')
     if not TOKEN:
         raise ValueError(name+' token not found')

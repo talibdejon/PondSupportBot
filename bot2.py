@@ -1,5 +1,3 @@
-# bot2.py
-import os
 import telebot
 import auth
 import features
@@ -7,13 +5,13 @@ import utils
 
 telegram_token=utils.load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
-print("Pond Mobile bot is running...")
+print("POND Mobile BOT is running...")
 
 # === Main menu keyboard ===
 def main_menu_keyboard():
     keyboard = telebot.types.InlineKeyboardMarkup()
-    keyboard.add(telebot.types.InlineKeyboardButton(text="Support", callback_data="support"))
-    keyboard.add(telebot.types.InlineKeyboardButton(text="Sales", callback_data="sales"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Support", callback_data="support"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Sales", callback_data="sales"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Usage", callback_data="check_usage"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="www.pondmobile.com/coverage-map-pm"))
     return keyboard
@@ -53,7 +51,12 @@ def handle_callback(call):
         keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
         keyboard.add(button)
-        bot.send_message(call.message.chat.id, "Please share your phone number:", reply_markup=keyboard)
+        text = (
+            "Please share your phone number:"
+            if call.data == "check_usage"
+            else "Please share your phone number to refresh your line:"
+        )
+        bot.send_message(call.message.chat.id, text, reply_markup=keyboard)
 
     elif call.data == "support":
         utils.increment_button("support")
@@ -82,19 +85,40 @@ def handle_callback(call):
 @bot.message_handler(content_types=['contact'])
 def process_contact(message):
     phone_number = message.contact.phone_number
+    user_mdns[message.chat.id] = auth.normalize_mdn(phone_number)
+
     remove_keyboard = telebot.types.ReplyKeyboardRemove()
     bot.send_message(message.chat.id, "Thanks! Verifying your account...", reply_markup=remove_keyboard)
 
-    # Step 1: check if the number exists in BeQuick
+    # Step 1: verify number in BeQuick
     line_id = auth.get_line_id(phone_number)
     if not line_id:
-        bot.send_message(message.chat.id, "❌ Your number is not registered as a POND mobile customer.")
+        bot.send_message(message.chat.id, "❌ Your number is not registered as a POND Mobile customer.")
         return
 
-    # Step 2: get usage info
+    # Step 2: detect refresh line request
+    last_message = message.reply_to_message
+    if last_message and "refresh your line" in (last_message.text or "").lower():
+        message_text, keyboard = features.handle_refresh_request(phone_number)
+        bot.send_message(
+            message.chat.id,
+            message_text,
+            reply_markup=keyboard,
+            parse_mode="Markdown",
+            disable_web_page_preview=True
+        )
+        return
+
+    # Step 3: check data usage
     bot.send_message(message.chat.id, "Please wait, I'm checking your data usage...")
     user_usage = features.check_usage(line_id)
-    bot.send_message(message.chat.id, f"{user_usage}", reply_markup=back_menu_keyboard(prev_section="main_menu"))
+    bot.send_message(
+        message.chat.id,
+        f"{user_usage}",
+        reply_markup=back_menu_keyboard(prev_section="main_menu"),
+        parse_mode="Markdown",
+        disable_web_page_preview=True
+    )
 
 
 # === Start polling ===
