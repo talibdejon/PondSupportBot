@@ -21,7 +21,7 @@ STAT_FILE = Path("stat/stat.json")
 
 def load_stat():
     if not STAT_FILE.exists():
-        return {"visitors": 0, "buttons": ["sales": 0, "support": 0, "usage": 0, "coverage": 0]}
+        return {"visitors": 0, "buttons": {"sales": 0, "support": 0, "usage": 0, "coverage": 0}}
     with open(STAT_FILE, "r") as f:
         return json.load(f)
 
