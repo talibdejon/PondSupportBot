@@ -8,7 +8,7 @@ app = FastAPI()
 def health():
     if utils.is_bot_running():
         return JSONResponse(content={"status": "up"}, status_code=200)
-    else
+    else:
         return JSONResponse(content={"status": "down"}, status_code=503)
 
 @app.get("/stat")
