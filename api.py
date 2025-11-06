@@ -5,7 +5,7 @@ import utils
 
 app = FastAPI()
 
-@app.get("/health")
+@app.get("/health", methods=["GET", "HEAD"])
 def health():
     if utils.is_bot_running():
         return JSONResponse(content={"status": "up"}, status_code=200)
