@@ -49,12 +49,14 @@ def handle_callback(call):
         )
 
     elif call.data == "check_usage":
+        utils.increment_button("usage")
         keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
         keyboard.add(button)
         bot.send_message(call.message.chat.id, "Please share your phone number:", reply_markup=keyboard)
 
     elif call.data == "support":
+        utils.increment_button("support")
         try:
             content = utils.load_prompt("support")
             bot.send_message(call.message.chat.id, content, reply_markup=back_menu_keyboard())
@@ -62,6 +64,7 @@ def handle_callback(call):
             bot.send_message(call.message.chat.id, "⚠️ File resources/support.txt not found.", reply_markup=back_menu_keyboard())
 
     elif call.data == "sales":
+        utils.increment_button("sales")
         try:
             content = utils.load_prompt("sales")
             bot.send_message(call.message.chat.id, content, reply_markup=back_menu_keyboard())
