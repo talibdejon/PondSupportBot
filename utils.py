@@ -1,47 +1,83 @@
+# utils.py
+
 import os
-import subprocess
 import json
 import pathlib
-import dotenv
+import subprocess
 import urllib.parse
+from dotenv import load_dotenv
 
-def load_prompt(name):
-    with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
+
+# === Load text prompt ===
+def load_prompt(name: str) -> str:
+    path = f"resources/{name}.txt"
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"[ERROR] File not found: {path}")
+    with open(path, "r", encoding="utf8") as file:
         return file.read()
 
-def load_token(name):
-    dotenv_path = 'secrets/pondsupportbot2/'+name+'.env'
-    dotenv.load_dotenv(dotenv_path)
+
+# === Load token from .env file ===
+def load_token(name: str) -> str:
+    dotenv_path = f"secrets/pondsupportbot2/{name}.env"
+    if not os.path.exists(dotenv_path):
+        raise FileNotFoundError(f"[ERROR] Env file not found: {dotenv_path}")
+
+    load_dotenv(dotenv_path)
     token = os.getenv(f"{name.upper()}_TOKEN")
     if not token:
         raise ValueError(f"[ERROR] {name} token not found in {dotenv_path}")
     return token
 
-def refresh_line(mdn: str) -> str:
 
+# === Telegram support deep-link with prefilled message ===
+def refresh_line(mdn: str) -> str:
     base_url = "https://t.me/pondsupport"
     message = f"Dear customer support, this is my number {mdn}, please refresh my line"
     encoded = urllib.parse.quote(message)
     return f"{base_url}?text={encoded}"
-    TOKEN = os.getenv(name.upper()+'_TOKEN')
-    if not TOKEN:
-        raise ValueError(name+' token not found')
-    return TOKEN
 
+
+# === Path for usage stats ===
 STAT_FILE = pathlib.Path("stat/stat.json")
 
+
 def load_stat():
+    """
+    Loads bot statistics (visitors, button clicks).
+    Creates default structure if file does not exist.
+    """
     if not STAT_FILE.exists():
-        return {"visitors": 0, "buttons": {"sales": 0, "support": 0, "usage": 0, "coverage": 0}}
+        return {
+            "visitors": 0,
+            "buttons": {
+                "sales": 0,
+                "support": 0,
+                "usage": 0,
+                "coverage": 0,
+                "refresh": 0
+            }
+        }
     with open(STAT_FILE, "r") as f:
         return json.load(f)
+
 
 def save_stat(stat):
     STAT_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(STAT_FILE, "w") as f:
-        json.dump(stat, f)
+        json.dump(stat, f, indent=2)
 
-def is_bot_running():
+
+def increment_button(button_name):
+    stat = load_stat()
+    if button_name in stat["buttons"]:
+        stat["buttons"][button_name] += 1
+    else:
+        stat["buttons"][button_name] = 1
+    save_stat(stat)
+
+
+def is_bot_running() -> bool:
     try:
         result = subprocess.run(
             ["systemctl", "is-active", "--quiet", "pondsupportbot.service"],
@@ -50,9 +86,3 @@ def is_bot_running():
         return result.returncode == 0
     except Exception:
         return False
-
-def increment_button(button_name):
-    stat = load_stat()
-    if button_name in stat["buttons"]:
-        stat["buttons"][button_name] += 1
-        save_stat(stat)

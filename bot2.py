@@ -4,7 +4,8 @@ import auth
 import features
 import utils
 
-telegram_token = utils.load_token("TELEGRAM")
+user_mdns = {}
+telegram_token=utils.load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
 print("POND Mobile BOT is running...")
 
@@ -14,18 +15,12 @@ user_mdns = {}
 
 # === Keyboards ===
 def main_menu_keyboard():
-    keyboard = telebot.types.InlineKeyboardMarkup(row_width=2)
-    keyboard.add(
-        telebot.types.InlineKeyboardButton("📞 Contact Support", callback_data="support"),
-        telebot.types.InlineKeyboardButton("💼 Contact Sales", callback_data="sales")
-    )
-    keyboard.add(
-        telebot.types.InlineKeyboardButton("📊 Check Usage", callback_data="check_usage"),
-        telebot.types.InlineKeyboardButton("🌍 Coverage Map", url="https://www.pondmobile.com/coverage-map-pm/")
-    )
-    keyboard.add(
-        telebot.types.InlineKeyboardButton("🔄 Refresh Line", callback_data="refresh_line")
-    )
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Support", callback_data="support"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Sales", callback_data="sales"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Check Usage", callback_data="check_usage"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="www.pondmobile.com/coverage-map-pm"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Refresh Line", callback_data="refresh_line"))
     return keyboard
 
 
@@ -62,6 +57,13 @@ def handle_callback(call):
             reply_markup=main_menu_keyboard()
         )
 
+    elif call.data == "check_usage":
+        utils.increment_button("usage")
+        keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
+        keyboard.add(button)
+        bot.send_message(call.message.chat.id, "Please share your phone number:", reply_markup=keyboard)
+
     elif call.data == "support":
         utils.increment_button("support")
         try:
@@ -92,6 +94,18 @@ def handle_callback(call):
         keyboard.add(button)
         bot.send_message(chat_id, "Please share your phone number to refresh your line:", reply_markup=keyboard)
 
+    elif call.data == "support_back":
+        bot.send_message(
+            call.message.chat.id,
+            "🧑‍💻 Support menu:",
+            reply_markup=back_menu_keyboard(prev_section="main_menu")
+        )
+    elif call.data == "refresh_line":
+        keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
+        keyboard.add(button)
+        bot.send_message(call.message.chat.id, "Please share your phone number to refresh your line:", reply_markup=keyboard)
+
 
 # === Handle shared phone contact ===
 @bot.message_handler(content_types=["contact"])
@@ -102,14 +116,12 @@ def process_contact(message):
     remove_keyboard = telebot.types.ReplyKeyboardRemove()
     bot.send_message(message.chat.id, "Thanks! Verifying your account...", reply_markup=remove_keyboard)
 
-    # Step 1: verify number in BeQuick
     line_id = auth.get_line_id(phone_number)
     if not line_id:
         bot.send_message(message.chat.id, "❌ Your number is not registered as a POND Mobile customer.")
         bot.send_message(message.chat.id, "🏠 Returning to main menu...", reply_markup=main_menu_keyboard())
         return
 
-    # Step 2: detect refresh line request
     last_message = message.reply_to_message
     if last_message and "refresh your line" in (last_message.text or "").lower():
         message_text, keyboard = features.handle_refresh_request(phone_number)
@@ -122,7 +134,6 @@ def process_contact(message):
         )
         return
 
-    # Step 3: check data usage
     bot.send_message(message.chat.id, "Please wait, I'm checking your data usage...")
     user_usage = features.check_usage(line_id)
     bot.send_message(
