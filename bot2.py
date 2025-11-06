@@ -29,6 +29,9 @@ def back_menu_keyboard(prev_section=None):
 # === /start command ===
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    stat = utils.load_stat()
+    stat["visitors"] += 1
+    utils.save_stat(stat)
     bot.send_message(
         message.chat.id,
         "📱 Welcome to POND Mobile Bot!\nChoose an option below:",
