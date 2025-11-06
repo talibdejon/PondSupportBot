@@ -1,20 +1,11 @@
 import telebot
 import auth
 import features
-from utils import load_token
+import utils
 
-user_mdns = {}
-
-telegram_token = load_token("TELEGRAM")
+telegram_token=utils.load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
 print("POND Mobile BOT is running...")
-
-
-# === Load text prompt ===
-def load_prompt(name):
-    with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
-        return file.read()
-
 
 # === Main menu keyboard ===
 def main_menu_keyboard():
@@ -22,10 +13,8 @@ def main_menu_keyboard():
     keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Support", callback_data="support"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Sales", callback_data="sales"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Usage", callback_data="check_usage"))
-    keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="https://www.pondmobile.com/coverage-map-pm/"))
-    keyboard.add(telebot.types.InlineKeyboardButton(text="Refresh Line", callback_data="refresh_line"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="www.pondmobile.com/coverage-map-pm"))
     return keyboard
-
 
 # === Back / Main menu keyboard ===
 def back_menu_keyboard(prev_section=None):
@@ -35,16 +24,17 @@ def back_menu_keyboard(prev_section=None):
     keyboard.add(telebot.types.InlineKeyboardButton(text="🏠 Main Menu", callback_data="main_menu"))
     return keyboard
 
-
 # === /start command ===
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    stat = utils.load_stat()
+    stat["visitors"] += 1
+    utils.save_stat(stat)
     bot.send_message(
         message.chat.id,
         "📱 Welcome to POND Mobile Bot!\nChoose an option below:",
         reply_markup=main_menu_keyboard()
     )
-
 
 # === Handle button presses ===
 @bot.callback_query_handler(func=lambda call: True)
@@ -56,8 +46,8 @@ def handle_callback(call):
             reply_markup=main_menu_keyboard()
         )
 
-    elif call.data in ["check_usage", "refresh_line"]:
-        # Inline -> Reply keyboard (share contact)
+    elif call.data == "check_usage":
+        utils.increment_button("usage")
         keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
         keyboard.add(button)
@@ -69,21 +59,29 @@ def handle_callback(call):
         bot.send_message(call.message.chat.id, text, reply_markup=keyboard)
 
     elif call.data == "support":
+        utils.increment_button("support")
         try:
-            content = load_prompt("support")
+            content = utils.load_prompt("support")
             bot.send_message(call.message.chat.id, content, reply_markup=back_menu_keyboard())
         except FileNotFoundError:
             bot.send_message(call.message.chat.id, "⚠️ File resources/support.txt not found.", reply_markup=back_menu_keyboard())
 
     elif call.data == "sales":
+        utils.increment_button("sales")
         try:
-            content = load_prompt("sales")
+            content = utils.load_prompt("sales")
             bot.send_message(call.message.chat.id, content, reply_markup=back_menu_keyboard())
         except FileNotFoundError:
             bot.send_message(call.message.chat.id, "⚠️ File resources/sales.txt not found.", reply_markup=back_menu_keyboard())
 
+    elif call.data == "support_back":
+        bot.send_message(
+            call.message.chat.id,
+            "🧑‍💻 Support menu:",
+            reply_markup=back_menu_keyboard(prev_section="main_menu")
+        )
 
-# === Handle shared contact ===
+# === Handle shared phone contact ===
 @bot.message_handler(content_types=['contact'])
 def process_contact(message):
     phone_number = message.contact.phone_number

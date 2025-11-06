@@ -1,6 +1,11 @@
-# requirements.txt
+# Core dependencies
 requests
 PyYAML
 python-dotenv
 schedule
 pyTelegramBotAPI
+
+# API dependencies
+fastapi
+uvicorn
+

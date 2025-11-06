@@ -1,34 +1,56 @@
 import os
-import urllib.parse
-from dotenv import load_dotenv
+import subprocess
+import json
+from pathlib import Path
 
-
-# === Load text prompt ===
-def load_prompt(name: str) -> str:
-    path = f"resources/{name}.txt"
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"[ERROR] File not found: {path}")
-    with open(path, "r", encoding="utf8") as file:
+def load_prompt(name):
+    with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
         return file.read()
 
-
-# === Load token from .env file ===
-def load_token(name: str) -> str:
-    dotenv_path = f"secrets/pondsupportbot2/{name}.env"
-    if not os.path.exists(dotenv_path):
-        raise FileNotFoundError(f"[ERROR] Env file not found: {dotenv_path}")
-
+def load_token(name):
+    dotenv_path = 'secrets/pondsupportbot2/'+name+'.env'
     load_dotenv(dotenv_path)
     token = os.getenv(f"{name.upper()}_TOKEN")
     if not token:
         raise ValueError(f"[ERROR] {name} token not found in {dotenv_path}")
     return token
 
-
-# === Telegram support deep-link with prefilled message ===
 def refresh_line(mdn: str) -> str:
 
     base_url = "https://t.me/pondsupport"
     message = f"Dear customer support, this is my number {mdn}, please refresh my line"
     encoded = urllib.parse.quote(message)
     return f"{base_url}?text={encoded}"
+    TOKEN = os.getenv(name.upper()+'_TOKEN')
+    if not TOKEN:
+        raise ValueError(name+' token not found')
+    return TOKEN
+
+STAT_FILE = Path("stat/stat.json")
+
+def load_stat():
+    if not STAT_FILE.exists():
+        return {"visitors": 0, "buttons": {"sales": 0, "support": 0, "usage": 0, "coverage": 0}}
+    with open(STAT_FILE, "r") as f:
+        return json.load(f)
+
+def save_stat(stat):
+    STAT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(STAT_FILE, "w") as f:
+        json.dump(stat, f)
+
+def is_bot_running():
+    try:
+        result = subprocess.run(
+            ["systemctl", "is-active", "--quiet", "pondsupportbot.service"],
+            check=False
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+def increment_button(button_name):
+    stat = load_stat()
+    if button_name in stat["buttons"]:
+        stat["buttons"][button_name] += 1
+        save_stat(stat)
