@@ -2,6 +2,8 @@
 from fastapi import FastAPI
 import utils
 
+app = FastAPI()
+
 @app.get("/health")
 def health():
     return {"status": "ok"} if utils.is_bot_running() else {"status": "down"}
