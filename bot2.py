@@ -77,6 +77,12 @@ def handle_callback(call):
             "🧑‍💻 Support menu:",
             reply_markup=back_menu_keyboard(prev_section="main_menu")
         )
+    elif call.data == "refresh_line":
+        keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
+        keyboard.add(button)
+        bot.send_message(call.message.chat.id, "Please share your phone number to refresh your line:", reply_markup=keyboard)
+
 
 # === Handle shared phone contact ===
 @bot.message_handler(content_types=['contact'])
