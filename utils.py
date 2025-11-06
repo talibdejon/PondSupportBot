@@ -3,6 +3,7 @@ import subprocess
 import json
 import pathlib
 import dotenv
+import urllib.parse
 
 def load_prompt(name):
     with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
