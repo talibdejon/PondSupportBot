@@ -39,3 +39,9 @@ def is_bot_running():
         return result.returncode == 0
     except Exception:
         return False
+
+def increment_button(button_name):
+    stat = load_stat()
+    if button_name in stat["buttons"]:
+        stat["buttons"][button_name] += 1
+        save_stat(stat)
