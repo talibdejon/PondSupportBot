@@ -1,17 +1,13 @@
-# bot2.py
-import os
 import telebot
 import auth
 import features
 from utils import load_token
 
-
-# List to save mdn inside
 user_mdns = {}
 
 telegram_token = load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
-print("POND mobile BOT is running...")
+print("POND Mobile BOT is running...")
 
 
 # === Load text prompt ===
@@ -60,18 +56,17 @@ def handle_callback(call):
             reply_markup=main_menu_keyboard()
         )
 
-    elif call.data == "check_usage":
+    elif call.data in ["check_usage", "refresh_line"]:
+        # Inline -> Reply keyboard (share contact)
         keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
         keyboard.add(button)
-        bot.send_message(call.message.chat.id, "Please share your phone number:", reply_markup=keyboard)
-
-    # === Refresh Line (ask for phone number) ===
-    elif call.data == "refresh_line":
-        keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-        button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
-        keyboard.add(button)
-        bot.send_message(call.message.chat.id, "Please share your phone number to refresh your line:", reply_markup=keyboard)
+        text = (
+            "Please share your phone number:"
+            if call.data == "check_usage"
+            else "Please share your phone number to refresh your line:"
+        )
+        bot.send_message(call.message.chat.id, text, reply_markup=keyboard)
 
     elif call.data == "support":
         try:
@@ -87,49 +82,45 @@ def handle_callback(call):
         except FileNotFoundError:
             bot.send_message(call.message.chat.id, "⚠️ File resources/sales.txt not found.", reply_markup=back_menu_keyboard())
 
-    elif call.data == "support_back":
-        bot.send_message(
-            call.message.chat.id,
-            "🧑‍💻 Support menu:",
-            reply_markup=back_menu_keyboard(prev_section="main_menu")
-        )
 
-
-# === Handle shared phone contact ===
+# === Handle shared contact ===
 @bot.message_handler(content_types=['contact'])
 def process_contact(message):
     phone_number = message.contact.phone_number
-
-    # Save MDN
     user_mdns[message.chat.id] = auth.normalize_mdn(phone_number)
 
     remove_keyboard = telebot.types.ReplyKeyboardRemove()
     bot.send_message(message.chat.id, "Thanks! Verifying your account...", reply_markup=remove_keyboard)
 
-    # Step 1: check if the number exists in BeQuick
+    # Step 1: verify number in BeQuick
     line_id = auth.get_line_id(phone_number)
     if not line_id:
-        bot.send_message(message.chat.id, "❌ Your number is not registered as a POND mobile customer.")
+        bot.send_message(message.chat.id, "❌ Your number is not registered as a POND Mobile customer.")
         return
 
-    # === Detect if user wanted to refresh line ===
+    # Step 2: detect refresh line request
     last_message = message.reply_to_message
     if last_message and "refresh your line" in (last_message.text or "").lower():
-        result = features.handle_refresh_request(phone_number)
-        if result.startswith("✅"):
-            mdn = auth.normalize_mdn(phone_number)
-            url = features.refresh_line(mdn)
-            keyboard = telebot.types.InlineKeyboardMarkup()
-            keyboard.add(telebot.types.InlineKeyboardButton(text="Open Support Chat", url=url))
-            bot.send_message(message.chat.id, "Click below to contact support:", reply_markup=keyboard)
-        else:
-            bot.send_message(message.chat.id, result)
+        message_text, keyboard = features.handle_refresh_request(phone_number)
+        bot.send_message(
+            message.chat.id,
+            message_text,
+            reply_markup=keyboard,
+            parse_mode="Markdown",
+            disable_web_page_preview=True
+        )
         return
 
-    # Step 2: get usage info
+    # Step 3: check data usage
     bot.send_message(message.chat.id, "Please wait, I'm checking your data usage...")
     user_usage = features.check_usage(line_id)
-    bot.send_message(message.chat.id, f"{user_usage}", reply_markup=back_menu_keyboard(prev_section="main_menu"))
+    bot.send_message(
+        message.chat.id,
+        f"{user_usage}",
+        reply_markup=back_menu_keyboard(prev_section="main_menu"),
+        parse_mode="Markdown",
+        disable_web_page_preview=True
+    )
 
 
 # === Start polling ===

@@ -1,1 +1,2 @@
-For detailed reports, please contact billing@pondmobile.com or contact our @pondsupport
+Used: {used}
+For more detailed usage reports, please contact billing@pondmobile.com, support@pondmobile.com or contact our support in telegram @pondsupport
