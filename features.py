@@ -84,3 +84,25 @@ headers = {
 response = requests.get(url, headers=headers)
 print(response.status_code)
 print(response.text)
+
+# === Refresh Line / Contact Support ===
+def refresh_line(mdn: str) -> str:
+
+    base_url = "https://t.me/pondsupport"
+    text = f"Dear customer support, this is my MDN {mdn}, please refresh my line"
+    encoded_text = text.replace(" ", "%20")
+    return f"{base_url}?text={encoded_text}"
+
+# === Handle refresh request (similar to check_usage) ===
+def handle_refresh_request(phone_number: str):
+
+    from auth import normalize_mdn, get_line_id  # импорт здесь, чтобы избежать циклических ссылок
+
+    mdn = normalize_mdn(phone_number)
+    line_id = get_line_id(mdn)
+
+    if not line_id:
+        return "❌ Your number is not registered as a POND mobile customer."
+
+    url = refresh_line(mdn)
+    return f"✅ Verified!\nClick below to contact support:\n{url}"

@@ -6,15 +6,16 @@ import features
 from utils import load_token
 
 
+# List to save mdn inside
+user_mdns = {}
 
-telegram_token=load_token("TELEGRAM")
+telegram_token = load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
-print("Pond Mobile bot is running...")
+print("POND mobile BOT is running...")
 
 
 # === Load text prompt ===
 def load_prompt(name):
-    """Load text file from /resources directory"""
     with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
         return file.read()
 
@@ -22,10 +23,11 @@ def load_prompt(name):
 # === Main menu keyboard ===
 def main_menu_keyboard():
     keyboard = telebot.types.InlineKeyboardMarkup()
-    keyboard.add(telebot.types.InlineKeyboardButton(text="Support", callback_data="support"))
-    keyboard.add(telebot.types.InlineKeyboardButton(text="Sales", callback_data="sales"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Support", callback_data="support"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Sales", callback_data="sales"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Usage", callback_data="check_usage"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="https://www.pondmobile.com/coverage-map-pm/"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Refresh Line", callback_data="refresh_line"))
     return keyboard
 
 
@@ -64,6 +66,13 @@ def handle_callback(call):
         keyboard.add(button)
         bot.send_message(call.message.chat.id, "Please share your phone number:", reply_markup=keyboard)
 
+    # === Refresh Line (ask for phone number) ===
+    elif call.data == "refresh_line":
+        keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
+        keyboard.add(button)
+        bot.send_message(call.message.chat.id, "Please share your phone number to refresh your line:", reply_markup=keyboard)
+
     elif call.data == "support":
         try:
             content = load_prompt("support")
@@ -90,6 +99,10 @@ def handle_callback(call):
 @bot.message_handler(content_types=['contact'])
 def process_contact(message):
     phone_number = message.contact.phone_number
+
+    # Save MDN
+    user_mdns[message.chat.id] = auth.normalize_mdn(phone_number)
+
     remove_keyboard = telebot.types.ReplyKeyboardRemove()
     bot.send_message(message.chat.id, "Thanks! Verifying your account...", reply_markup=remove_keyboard)
 
@@ -97,6 +110,20 @@ def process_contact(message):
     line_id = auth.get_line_id(phone_number)
     if not line_id:
         bot.send_message(message.chat.id, "❌ Your number is not registered as a POND mobile customer.")
+        return
+
+    # === Detect if user wanted to refresh line ===
+    last_message = message.reply_to_message
+    if last_message and "refresh your line" in (last_message.text or "").lower():
+        result = features.handle_refresh_request(phone_number)
+        if result.startswith("✅"):
+            mdn = auth.normalize_mdn(phone_number)
+            url = features.refresh_line(mdn)
+            keyboard = telebot.types.InlineKeyboardMarkup()
+            keyboard.add(telebot.types.InlineKeyboardButton(text="Open Support Chat", url=url))
+            bot.send_message(message.chat.id, "Click below to contact support:", reply_markup=keyboard)
+        else:
+            bot.send_message(message.chat.id, result)
         return
 
     # Step 2: get usage info
