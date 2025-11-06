@@ -1,5 +1,6 @@
 # api.py
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 import utils
 
 app = FastAPI()
