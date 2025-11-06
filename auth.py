@@ -1,15 +1,14 @@
 # auth.py
 import re
 import requests
-from utils import load_token
+import utils
 
-API_TOKEN = load_token('BEQUICK')
+API_TOKEN = utils.load_token('BEQUICK')
 API_URL = "https://pondmobile-atom-api.bequickapps.com"
 
 
 # === Normalize phone number ===
 def normalize_mdn(phone_number: str) -> str:
-    """Remove non-digits and strip country code 1 for US numbers."""
     digits = re.sub(r"\D", "", phone_number)
     if len(digits) == 11 and digits.startswith("1"):
         digits = digits[1:]
@@ -18,7 +17,6 @@ def normalize_mdn(phone_number: str) -> str:
 
 # === Verify customer and get line_id ===
 def get_line_id(mdn: str):
-    """Check BeQuick if MDN exists and return line_id."""
     clean_mdn = normalize_mdn(mdn)
     url = f"{API_URL}/lines?by_quick_find[]={clean_mdn}"
     headers = {
