@@ -3,6 +3,7 @@ import auth
 import features
 import utils
 
+user_mdns = {}
 telegram_token=utils.load_token("TELEGRAM")
 bot = telebot.TeleBot(telegram_token)
 print("POND Mobile BOT is running...")
@@ -14,6 +15,7 @@ def main_menu_keyboard():
     keyboard.add(telebot.types.InlineKeyboardButton(text="Contact Sales", callback_data="sales"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Usage", callback_data="check_usage"))
     keyboard.add(telebot.types.InlineKeyboardButton(text="Check Coverage", url="www.pondmobile.com/coverage-map-pm"))
+    keyboard.add(telebot.types.InlineKeyboardButton(text="Refresh Line", callback_data="refresh_line"))
     return keyboard
 
 # === Back / Main menu keyboard ===
@@ -51,12 +53,7 @@ def handle_callback(call):
         keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         button = telebot.types.KeyboardButton(text="Share my phone", request_contact=True)
         keyboard.add(button)
-        text = (
-            "Please share your phone number:"
-            if call.data == "check_usage"
-            else "Please share your phone number to refresh your line:"
-        )
-        bot.send_message(call.message.chat.id, text, reply_markup=keyboard)
+        bot.send_message(call.message.chat.id, "Please share your phone number:", reply_markup=keyboard)
 
     elif call.data == "support":
         utils.increment_button("support")
@@ -90,13 +87,11 @@ def process_contact(message):
     remove_keyboard = telebot.types.ReplyKeyboardRemove()
     bot.send_message(message.chat.id, "Thanks! Verifying your account...", reply_markup=remove_keyboard)
 
-    # Step 1: verify number in BeQuick
     line_id = auth.get_line_id(phone_number)
     if not line_id:
         bot.send_message(message.chat.id, "❌ Your number is not registered as a POND Mobile customer.")
         return
 
-    # Step 2: detect refresh line request
     last_message = message.reply_to_message
     if last_message and "refresh your line" in (last_message.text or "").lower():
         message_text, keyboard = features.handle_refresh_request(phone_number)
@@ -109,7 +104,6 @@ def process_contact(message):
         )
         return
 
-    # Step 3: check data usage
     bot.send_message(message.chat.id, "Please wait, I'm checking your data usage...")
     user_usage = features.check_usage(line_id)
     bot.send_message(
