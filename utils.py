@@ -3,7 +3,6 @@ import os
 import subprocess
 import json
 from pathlib import Path
-import utils
 
 def load_prompt(name):
     with open(f"resources/{name}.txt", "r", encoding="utf8") as file:
