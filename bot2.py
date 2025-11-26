@@ -10,7 +10,7 @@ print("POND Mobile BOT is running...")
 
 # === In-memory storage ===
 user_mdns = {}
-user_actions = {}  # хранит, что выбрал пользователь: "usage" или "refresh"
+user_actions = {}  # keeps user input # : "usage" или "refresh"
 
 
 # === Keyboards ===
